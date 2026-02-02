@@ -1,0 +1,85 @@
+version: "2"
+services:
+  # Hadoop Services
+  namenode:
+    image: apache/hadoop:3.4
+    hostname: namenode
+    command: ["hdfs", "namenode"]
+    ports:
+      - 9870:9870
+    env_file:
+      - config/hadoop/.config
+    environment:
+      ENSURE_NAMENODE_DIR: "/tmp/hadoop-root/dfs/name"
+  datanode:
+    image: apache/hadoop:3.4
+    command: ["hdfs", "datanode"]
+    env_file:
+      - config/hadoop/.config
+  resourcemanager:
+    image: apache/hadoop:3.4
+    hostname: resourcemanager
+    command: ["yarn", "resourcemanager"]
+    ports:
+        - 8088:8088
+    env_file:
+      - config/hadoop/.config
+    volumes:
+      - ./test/hadoop/test.sh:/opt/test.sh
+  nodemanager:
+    image: apache/hadoop:3.4
+    command: ["yarn", "nodemanager"]
+    env_file:
+      - config/hadoop/.config
+  # Spark Services
+  spark-common: &spark-common
+    build: .
+    volumes:
+      - ./config/spark/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
+      - spark-logs:/opt/spark/spark-events
+  spark-master:
+    <<: *spark-common
+    environment:
+      - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+    command: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.master.Master"]
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080" ]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+    ports:
+      - "7077:7077"     
+      - "9090:8080"
+  
+  spark-history-server:
+    <<: *spark-common
+    command: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.history.HistoryServer"]
+    environment:
+      - SPARK_MODE=history
+      - SPARK_HISTORY_OPTS=-Dspark.history.fs.logDirectory=/opt/spark/spark-events
+    ports:
+      - "18080:18080"
+    depends_on:
+      - spark-master
+
+  spark-worker:
+    <<: *spark-common
+    command: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077"]
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_WEBUI_PORT=8082
+      - SPARK_WORKER_MEMORY=4g
+      - SPARK_DAEMON_MEMORY=1g
+    depends_on:
+      - spark-master
+    ports:
+      - "8082:8082"
+
+volumes:
+  spark-logs:
+
+    
+
+  
