@@ -16,15 +16,25 @@ docker exec -it lakehouse-spark-master-1 /opt/spark/bin/pyspark --master spark:/
 ```
 
 - Step3: Chạy test đọc ghi trên hadoop
-```bash
-# Tạo danh sách dữ liệu mẫu
+```python
 data = [("Hadoop_Test", 100), ("Spark_Test", 200), ("Connection_Ok", 300)]
 df = spark.createDataFrame(data, ["Name", "Value"])
-
-# Ghi file vào thư mục /tmp trên HDFS để test
 df.write.mode("overwrite").csv("hdfs://namenode:8020/tmp/test_connection")
-
-# Đọc dữ liệu vừa ghi
 check_df = spark.read.csv("hdfs://namenode:8020/tmp/test_connection")
 check_df.show()
+```
+
+- Step4: Chạy test iceberg
+```python
+spark.sql("CREATE DATABASE IF NOT EXISTS hadoop_prod.db_test")
+spark.sql("CREATE TABLE hadoop_prod.db_test.table_iceberg (id bigint, data string) USING iceberg")
+spark.sql("INSERT INTO hadoop_prod.db_test.table_iceberg VALUES (1, 'Iceberg_Test_Ok')")
+spark.table("hadoop_prod.db_test.table_iceberg").show()
+```
+
+- Step5: Cài dbeaver, kết nối và chạy test tạo bảng
+```sql
+create schema gold
+create table iceberg.gold.test (testcol int)
+insert into iceberg.gold.test (1)
 ```
