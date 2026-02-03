@@ -141,10 +141,19 @@ services:
     ports:
       - "9083:9083"
     restart: always
+  #Jupyter Notebook Service
+  jupyter-spark:
+    image: quay.io/jupyter/pyspark-notebook:x86_64-spark-3.5.3
+    volumes:
+      - "spark-query:/home/jovyan/work"
+    ports:
+      - "8888:8888"
+
 volumes:
   spark-logs:
   trino-data:
   postgres-metastore-volume:
+  spark-query:
     
 
   
