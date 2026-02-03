@@ -145,7 +145,7 @@ services:
   jupyter-spark:
     image: quay.io/jupyter/pyspark-notebook:x86_64-spark-3.5.3
     volumes:
-      - "spark-query:/home/jovyan/work"
+      - "spark-query:/home/jovyan"
     ports:
       - "8888:8888"
 

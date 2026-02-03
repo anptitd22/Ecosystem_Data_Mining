@@ -1,3 +1,9 @@
+local_resource(
+    'init-env',
+    'cd ./lakehouse && cp .env.example .env',
+    labels=['setup']
+)
+
 docker_compose('./lakehouse/docker-compose.yml')
 
 watch_file('./lakehouse')
