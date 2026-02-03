@@ -7,7 +7,7 @@ docker exec -it lakehouse-spark-master-1 /opt/spark/bin/spark-submit \
   --conf spark.eventLog.enabled=true \
   --conf spark.eventLog.dir=/opt/spark/spark-events \
   --class org.apache.spark.examples.SparkPi \
-  /opt/spark/examples/jars/spark-examples_2.12-3.5.8.jar 10
+  /opt/spark/examples/jars/spark-examples_2.12-3.5.3.jar 10
 ```
 
 - Step2: Kết nối vào pyspark
