@@ -1,9 +1,3 @@
-local_resource(
-    'init-env',
-    'cd ./lakehouse && cp .env.example .env && cd .. && cd ./prefect && cp .env.example .env',
-    labels=['setup']
-)
-
 docker_compose('./lakehouse/docker-compose.yml')
 
 watch_file('./lakehouse')
@@ -20,6 +14,10 @@ dc_resource('postgres-metastore', labels=['metastore-database'])
 dc_resource('metastore', labels=['metadata'])
 dc_resource('spark-common', labels=['others'])
 dc_resource('jupyter-spark', labels=['query'])
+
+dc_resource('etcd', labels=['metadata'])
+dc_resource('minio', labels=['storage'])
+dc_resource('standalone', labels=['metadata'])
 
 docker_compose('./prefect/docker-compose.yml')
 watch_file('./prefect')
