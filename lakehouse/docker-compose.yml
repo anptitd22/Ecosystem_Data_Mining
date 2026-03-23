@@ -48,8 +48,9 @@ services:
   spark-master:
     <<: *spark-common
     environment:
-      - SPARK_MODE=master
-      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      <<: *spark-env
+      SPARK_MODE: master
+      SPARK_RPC_AUTHENTICATION_ENABLED: no
     command: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.master.Master"]
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080" ]
@@ -64,8 +65,9 @@ services:
     <<: *spark-common
     command: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.history.HistoryServer"]
     environment:
-      - SPARK_MODE=history
-      - SPARK_HISTORY_OPTS=-Dspark.history.fs.logDirectory=/opt/spark/spark-events
+      <<: *spark-env
+      SPARK_MODE: history
+      SPARK_HISTORY_OPTS: -Dspark.history.fs.logDirectory=/opt/spark/spark-events
     ports:
       - "18080:18080"
     depends_on:
@@ -75,11 +77,12 @@ services:
     <<: *spark-common
     command: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077"]
     environment:
-      - SPARK_MODE=worker
-      - SPARK_MASTER_URL=spark://spark-master:7077
-      - SPARK_WORKER_WEBUI_PORT=8082
-      - SPARK_WORKER_MEMORY=4g
-      - SPARK_DAEMON_MEMORY=1g
+      <<: *spark-env
+      SPARK_MODE: worker
+      SPARK_MASTER_URL: spark://spark-master:7077
+      SPARK_WORKER_WEBUI_PORT: 8082
+      SPARK_WORKER_MEMORY: 4g
+      SPARK_DAEMON_MEMORY: 1g
     depends_on:
       - spark-master
     ports:
@@ -195,6 +198,24 @@ services:
       interval: 30s
       timeout: 20s
       retries: 3
+  
+  mc:
+    image: minio/mc:latest
+    env_file:
+      - .env
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set myminio http://minio:9000 ${MINIO_ROOT_USER:-admin} ${MINIO_ROOT_PASSWORD:-admin12345};
+
+      /usr/bin/mc mb --ignore-existing myminio/warehouse;
+      /usr/bin/mc mb --ignore-existing myminio/iceberg;
+      /usr/bin/mc mb --ignore-existing myminio/lakehouse;
+
+      exit 0;
+      "
 
   standalone:
     container_name: milvus-standalone
